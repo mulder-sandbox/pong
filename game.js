@@ -3,10 +3,7 @@ class Game
     setup()
     {
         this.isDebug = false;
-        this.field = {
-            width: 800,
-            height: 600
-        };
+        this.field = new Field();
         this.app = new PIXI.Application(this.field.width, this.field.height, { antialias: true });
         document.getElementById('scene').appendChild(this.app.view);
 
@@ -21,6 +18,8 @@ class Game
         this.playerControllSetup(this.player2);
 
         this.ball = new Ball(this.graphics, this.field);
+
+        this.setupEvents()
     }
 
     start()
@@ -48,6 +47,60 @@ class Game
         player.downEvent.press  = function () {
             player.down();
         };
+    }
+
+    setupEvents()
+    {
+        ObserverManager.instance.subscribe('ball_go', new PlayerObserver(this.player1));
+        ObserverManager.instance.subscribe('ball_go', new PlayerObserver(this.player2));
+        ObserverManager.instance.subscribe('ball_go', new FieldObserver(this.field));
+    }
+}
+
+class FieldObserver
+{
+    constructor(field)
+    {
+        this.field = field;
+    }
+
+    execute(ball)
+    {
+        if (ball.y + ball.radius <= 0 || ball.y >= this.field.height - ball.radius) {
+            ball.yDirect *= -1;
+        }
+    }
+}
+
+class PlayerObserver
+{
+    constructor(player)
+    {
+        this.player = player;
+    }
+
+    execute(ball)
+    {
+        console.log('x: ' + ball.x + ', ' + 'y: ' + ball.y)
+    }
+}
+
+class Field
+{
+    constructor()
+    {
+        this._width = 800;
+        this._height = 600;
+    }
+
+    get width()
+    {
+        return this._width;
+    }
+
+    get height()
+    {
+        return this._height;
     }
 }
 
@@ -78,14 +131,8 @@ class Ball
 
     go() {
         this.x += this.xDirect;
-        // if (this.x <= 0 || this.x >= 600) {
-        //     this.xDirect *= -1;
-        // }
-
-        if (this.y + this.radius <= 0 || this.y >= 600 - this.radius) {
-            this.yDirect *= -1;
-        }
         this.y += this.yDirect;
+        ObserverManager.instance.dispatch('ball_go', this);
     }
 }
 
