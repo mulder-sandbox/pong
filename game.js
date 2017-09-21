@@ -66,8 +66,13 @@ class FieldObserver
 
     execute(ball)
     {
-        if (ball.y + ball.radius <= 0 || ball.y >= this.field.height - ball.radius) {
-            ball.yDirect *= -1;
+        if (ball.y - ball.radius <= 0 || ball.y >= this.field.height - ball.radius) {
+            ball.changeYDirect();
+        }
+
+        if (ball.x - ball.radius * 2 - 1 > this.field.width || ball.x + ball.radius * 2 + 1 <= 0) {
+            ball.newBall();
+            ball.changeXDirect();
         }
     }
 }
@@ -107,10 +112,10 @@ class Field
 class Ball
 {
     constructor(graphics, field) {
+        this.field = field;
         this.xDirect = 2;
         this.yDirect = +2;
-        this.x = field.width/2;
-        this.y = field.height/2;
+        this.newBall();
         this.radius = 10;
         this.graphics = graphics;
     }
@@ -121,18 +126,26 @@ class Ball
         this.graphics.drawCircle(this.x, this.y, this.radius);
     }
 
-    attach() {
-
-    }
-
-    detach() {
-
-    }
-
     go() {
         this.x += this.xDirect;
         this.y += this.yDirect;
         ObserverManager.instance.dispatch('ball_go', this);
+    }
+
+    changeXDirect()
+    {
+        ball.xDirect *= -1;
+    }
+
+    changeYDirect()
+    {
+        ball.yDirect *= -1;
+    }
+
+    newBall()
+    {
+        this.x = this.field.width/2;
+        this.y = this.field.height/2;
     }
 }
 
@@ -154,11 +167,16 @@ class Player
     }
 
     up() {
-        this.y -= this.playerSpeed;
+        console.log(this.field.height - this.height)
+        if (this.y > 0) {
+            this.y -= this.playerSpeed;
+        }
     }
 
     down() {
-        this.y += this.playerSpeed;
+        if (this.y < this.field.height - this.height) {
+            this.y += this.playerSpeed;
+        }
     }
 }
 
